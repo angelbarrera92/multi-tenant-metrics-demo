@@ -1,0 +1,53 @@
+---
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: grafana-multi-tenant-operator
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  url: https://k8spin.github.io/grafana-multi-tenant-operator/charts
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-multi-tenant-operator
+  namespace: monitoring
+type: Opaque
+stringData:
+  GRAFANA_MULTI_TENANT_OPERATOR_HOST: kube-prometheus-stack-grafana.monitoring.svc.cluster.local
+  # Consider explicitly setting the admin credentials in the kube-prometheus-stack chart
+  # This is the default password
+  GRAFANA_MULTI_TENANT_OPERATOR_ADMIN_USERNAME: admin
+  GRAFANA_MULTI_TENANT_OPERATOR_ADMIN_PASSWORD: prom-operator
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: grafana-multi-tenant-operator
+  namespace: flux-system
+spec:
+  timeout: 30m
+  dependsOn:
+    - name: kube-prometheus-stack
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  interval: 1m
+  chart:
+    spec:
+      chart: grafana-multi-tenant-operator
+      version: "1.3.1"
+      sourceRef:
+        kind: HelmRepository
+        name: grafana-multi-tenant-operator
+        namespace: flux-system
+      interval: 1m
+  releaseName: grafana-multi-tenant-operator
+  targetNamespace: monitoring
+  storageNamespace: monitoring
+  valuesFrom: []
+  values: {}
