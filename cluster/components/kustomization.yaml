@@ -1,0 +1,10 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - flux-system/flux.yaml
+  - flux-system/seed.yaml
+  - monitoring/namespace.yaml
+  - monitoring/kube-prometheus.yaml
+  - monitoring/grafana-multi-tenant-operator.yaml

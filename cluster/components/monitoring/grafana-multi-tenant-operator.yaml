@@ -4,6 +4,8 @@ kind: HelmRepository
 metadata:
   name: grafana-multi-tenant-operator
   namespace: flux-system
+  labels:
+    phase: seed
 spec:
   interval: 1m0s
   url: https://k8spin.github.io/grafana-multi-tenant-operator/charts
@@ -13,6 +15,8 @@ kind: Secret
 metadata:
   name: grafana-multi-tenant-operator
   namespace: monitoring
+  labels:
+    phase: seed
 type: Opaque
 stringData:
   GRAFANA_MULTI_TENANT_OPERATOR_HOST: kube-prometheus-stack-grafana.monitoring.svc.cluster.local
