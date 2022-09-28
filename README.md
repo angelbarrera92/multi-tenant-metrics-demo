@@ -1,5 +1,13 @@
 # multi-tenant-metrics-demo
 
+This gitops project showcases:
+
+- Kubernetes
+- Prometheus
+- Grafana
+- GitOps
+- Multi-tenancy
+
 ## Install flux
 
 ```bash
@@ -16,3 +24,13 @@ $ kubectl apply -f cluster/components/flux-system/seed.yaml
 ## Colima
 
 node-exporter seems to be not working in colima
+
+## Todo
+
+- Network Policies
+- Tenant template? (Helm chart?)
+- Better docs
+
+# License
+
+None
