@@ -1,0 +1,93 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-multi-tenant-proxy
+  namespace: monitoring
+  labels:
+    application: prometheus-multi-tenant-proxy
+    phase: seed
+data:
+  PROMETHEUS_MULTI_TENANT_PROXY_PROMETHEUS_ENDPOINT: http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: prometheus-auth-config
+  namespace: monitoring
+  labels:
+    application: prometheus-multi-tenant-proxy
+    phase: seed
+stringData:
+  authn.yaml: |
+    users:
+    - username: bob
+      password: jijiji
+      namespace: monitoring
+    - username: alice
+      password: jojojo
+      namespace: kube-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-multi-tenant-proxy
+  namespace: monitoring
+  labels:
+    application: prometheus-multi-tenant-proxy
+spec:
+  replicas: 1
+  strategy: {}
+  selector:
+    matchLabels:
+      application: prometheus-multi-tenant-proxy
+  template:
+    metadata:
+      labels:
+        application: prometheus-multi-tenant-proxy
+    spec:
+      volumes:
+      - name: prometheus-auth-config
+        secret:
+          secretName: prometheus-auth-config
+      containers:
+      - name: prometheus-multi-tenant-proxy
+        image: ghcr.io/k8spin/prometheus-multi-tenant-proxy:latest
+        imagePullPolicy: Always
+        command: ["/bin/bash"]
+        args: ["-c", "/prometheus-multi-tenant-proxy run --port=9092 --prometheus-endpoint=${PROMETHEUS_MULTI_TENANT_PROXY_PROMETHEUS_ENDPOINT} --auth-config=/etc/prometheus-auth-config/authn.yaml --reload-interval=5"]
+        ports:
+          - name: http
+            containerPort: 9092
+            protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9092
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9092
+        envFrom:
+        - configMapRef:
+            name: prometheus-multi-tenant-proxy
+        volumeMounts:
+          - name: prometheus-auth-config
+            mountPath: /etc/prometheus-auth-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-multi-tenant-proxy
+  namespace: monitoring
+  labels:
+    application: prometheus-multi-tenant-proxy
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 9092
+    protocol: TCP
+    targetPort: http
+  selector:
+    application: prometheus-multi-tenant-proxy
